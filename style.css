@@ -1,0 +1,41 @@
+body {
+    height: 100vh;
+    margin: 0;
+    background: linear-gradient(to bottom, #222, black);
+    color: #eee;
+    font-family: Tahoma, sans-serif;
+}
+
+h1 {
+    font-size: 3rem;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.config {
+    margin-right: 1rem;
+    p {
+        display: flex;
+        flex-direction: column;
+
+        label {
+            .label-text {
+                display: inline-block;
+                width: 70px;
+            }
+            input {
+                width: 150px;
+            }
+        }
+    }
+}
+
+canvas {
+    width: 800px;
+    height: 800px;
+}
