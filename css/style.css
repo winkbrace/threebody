@@ -39,7 +39,16 @@ main {
     }
 }
 
-canvas {
+.canvas-container {
+    position: relative;
     width: 800px;
     height: 800px;
+
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 800px;
+        height: 800px;
+    }
 }

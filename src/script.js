@@ -1,4 +1,7 @@
-const canvas = document.getElementById('canvas');
+const canvasPlanets = document.getElementById('planets');
+const ctxPlanets = canvasPlanets.getContext("2d");
+
+const canvas = document.getElementById('vectors');
 const ctx = canvas.getContext("2d");
 ctx.lineWidth = 5;
 
@@ -11,6 +14,7 @@ const planets = [
 
 const clearCanvas = function ()
 {
+    ctxPlanets.clearRect(0, 0, canvasPlanets.width, canvasPlanets.height);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -30,20 +34,20 @@ const drawArrowHead = function (pos, angle)
     ctx.fill();
 }
 
-const drawVector = function (pos, V2)
+const drawVector = function (planet)
 {
-    const center = {x: pos.x + 32, y: pos.y + 32}
-    const magnitude = V2.speed * 20;
-    const angle = (V2.angle - 90) * (Math.PI / 180);
+    const magnitude = planet.V2.speed * 20;
+    const angle = (planet.V2.angle - 90) * (Math.PI / 180);
+    const start = {x: planet.pos.x, y: planet.pos.y}
     const end = {
-        x: center.x + Math.cos(angle) * magnitude,
-        y: center.y + Math.sin(angle) * magnitude
+        x: start.x + Math.cos(angle) * magnitude,
+        y: start.y + Math.sin(angle) * magnitude
     };
 
     ctx.beginPath();
 
     // draw vector line
-    ctx.moveTo(center.x, center.y);
+    ctx.moveTo(start.x, start.y);
     ctx.lineTo(end.x, end.y);
     ctx.strokeStyle = "white";
     ctx.stroke();
@@ -58,12 +62,13 @@ const drawPlanets = function ()
 
     for (let planet of planets) {
         // draw planet
+        const size = planet.mass * 10;
         const img = new Image();
-        img.onload = () => ctx.drawImage(img, planet.pos.x, planet.pos.y, 64, 64);
+        img.onload = () => ctxPlanets.drawImage(img, planet.pos.x - (size / 2), planet.pos.y - (size / 2), size, size);
         img.src = planet.img;
 
         // draw vector
-        drawVector(planet.pos, planet.V2);
+        drawVector(planet);
     }
 }
 
