@@ -31,6 +31,10 @@ main {
             input {
                 width: 150px;
             }
+            .range-value {
+                color: white;
+                width: 30px;
+            }
         }
     }
 }
