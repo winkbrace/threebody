@@ -33,9 +33,31 @@ main {
         display: flex;
         flex-direction: column;
 
+        &.button-container {
+            flex-direction: row;
+            gap: 1rem;
+        }
+
         label {
             input {
                 width: 150px;
+
+                &[type="range"] {
+                    accent-color: orangered;
+                }
+            }
+        }
+
+        button {
+            background-color: darkorange;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: orangered;
             }
         }
     }
