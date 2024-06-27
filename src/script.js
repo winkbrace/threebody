@@ -5,21 +5,45 @@ const canvas = document.getElementById('vectors');
 const ctx = canvas.getContext("2d");
 ctx.lineWidth = 5;
 
-// Initialize planets
-const planets = [
-    {name: "Aldebaran", img: "img/planet1.png", pos: {x: 100, y: 100}, mass: 5, V2: {angle: 120, speed: 4}},
-    {name: "Bellatrix", img: "img/planet2.png", pos: {x: 600, y: 300}, mass: 5, V2: {angle: 260, speed: 3}},
-    {name: "Castor",    img: "img/planet3.png", pos: {x: 200, y: 700}, mass: 5, V2: {angle: 30,  speed: 6}},
-];
+const G = 200000; // Gravitational constant. Change to alter magnitude.
+const speedMagnitude = 20;
 
-const clearCanvas = function ()
-{
+// Initialize planets
+const planets = {
+    aldebaran: {
+        name: "Aldebaran",
+        img: "img/planet1.png",
+        pos: {x: 100, y: 100},
+        mass: 5,
+        V2: {angle: 120, speed: 4},
+        vectors: {current: {}, gravity: {}, combined: {}}
+    },
+    bellatrix: {
+        name: "Bellatrix",
+        img: "img/planet2.png",
+        pos: {x: 600, y: 300},
+        mass: 5,
+        V2: {angle: 260, speed: 3},
+        vectors: {current: {}, gravity: {}, combined: {}}
+    },
+    castor: {
+        name: "Castor",
+        img: "img/planet3.png",
+        pos: {x: 200, y: 700},
+        mass: 5,
+        V2: {angle: 30, speed: 6},
+        vectors: {current: {}, gravity: {}, combined: {}}
+    },
+};
+
+const next = {aldebaran: {pos: {}, V2: {}}, bellatrix: {pos: {}, V2: {}}, castor: {pos: {}, V2: {}}};
+
+const clearCanvas = function () {
     ctxPlanets.clearRect(0, 0, canvasPlanets.width, canvasPlanets.height);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-const drawArrowHead = function (pos, angle)
-{
+const drawArrowHead = function (pos, angle, color) {
     const arrowSize = 20;
     const startAngle = angle - Math.PI - (Math.PI / 6);
     const endAngle = angle - Math.PI + (Math.PI / 6);
@@ -30,13 +54,25 @@ const drawArrowHead = function (pos, angle)
     ctx.moveTo(x, y);
     ctx.arc(x, y, arrowSize, startAngle, endAngle);
     ctx.lineTo(x, y);
-    ctx.fillStyle = "white";
+    ctx.fillStyle = color;
     ctx.fill();
 }
 
-const drawVector = function (planet)
-{
-    const magnitude = planet.V2.speed * 20;
+const drawVector = function (start, end, angle, color) {
+    ctx.beginPath();
+
+    // draw vector line
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+
+    // add arrow point
+    drawArrowHead(end, angle, color);
+}
+
+const drawPlanetVector = function (planet) {
+    const magnitude = planet.V2.speed * speedMagnitude;
     const angle = (planet.V2.angle - 90) * (Math.PI / 180);
     const start = {x: planet.pos.x, y: planet.pos.y}
     const end = {
@@ -44,23 +80,74 @@ const drawVector = function (planet)
         y: start.y + Math.sin(angle) * magnitude
     };
 
-    ctx.beginPath();
+    planet.vectors.current = {start, end};
 
-    // draw vector line
-    ctx.moveTo(start.x, start.y);
-    ctx.lineTo(end.x, end.y);
-    ctx.strokeStyle = "white";
-    ctx.stroke();
-
-    // add arrow point
-    drawArrowHead(end, angle);
+    drawVector(start, end, angle, "yellow");
 }
 
-const drawPlanets = function ()
+const calculateGravitationalVectorEndPosition = function (p1, p2) {
+    const dx = p2.pos.x - p1.pos.x;
+    const dy = p2.pos.y - p1.pos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const force = (G * p1.mass * p2.mass) / (distance * distance);
+    const angle = Math.atan2(dy, dx);
+
+    return {
+        x: p1.pos.x + Math.cos(angle) * force,
+        y: p1.pos.y + Math.sin(angle) * force
+    };
+}
+
+const drawGravityVector = function (planet) {
+    const [p1, p2] = Object.values(planets).filter((p) => p.name !== planet.name);
+    const end1 = calculateGravitationalVectorEndPosition(planet, p1);
+    const end2 = calculateGravitationalVectorEndPosition(planet, p2);
+
+    const start = {x: planet.pos.x, y: planet.pos.y}
+    const end = {x: end1.x + end2.x - start.x, y: end1.y + end2.y - start.y};
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+    planet.vectors.gravity = {start, end};
+
+    drawVector(start, end, angle, "red");
+}
+
+const drawCombinedVector = function (planet) {
+    const start = {x: planet.pos.x, y: planet.pos.y}
+    const end = {
+        x: planet.vectors.current.end.x + planet.vectors.gravity.end.x - start.x,
+        y: planet.vectors.current.end.y + planet.vectors.gravity.end.y - start.y
+    };
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+
+    planet.vectors.combined = {start, end};
+
+    drawVector(start, end, angle, "orange");
+}
+
+const setNextValues = function (planet) {
+    const planetId = planet.name.toLowerCase();
+    const {start, end} = planet.vectors.combined;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const angle = Math.atan2(dy, dx);
+    const speed = Math.sqrt((dx * dx) + (dy * dy)) / speedMagnitude;
+
+    next[planetId].pos.x += Math.cos(angle) * speed;
+    next[planetId].pos.y += Math.sin(angle) * speed;
+    next[planetId].V2.speed = speed;
+    next[planetId].V2.angle = angle * (180 / Math.PI);
+
+    document.getElementById(planetId + '-speed-next').innerText = next[planetId].V2.speed.toFixed(1);
+    document.getElementById(planetId + '-angle-next').innerText = next[planetId].V2.angle.toFixed(1);
+}
+
+const draw = function ()
 {
     clearCanvas();
 
-    for (let planet of planets) {
+    for (let planetId in planets) {
+        const planet = planets[planetId];
         // draw planet
         const size = planet.mass * 10;
         const img = new Image();
@@ -68,12 +155,17 @@ const drawPlanets = function ()
         img.src = planet.img;
 
         // draw vector
-        drawVector(planet);
+        drawPlanetVector(planet);
+        drawGravityVector(planet);
+        drawCombinedVector(planet);
+
+        setNextValues(planet);
     }
 }
 
 // initialize html form
-for (let planet of planets) {
+for (let planetId in planets) {
+    const planet = planets[planetId];
     const planetName = planet.name.toLowerCase();
 
     const inputMass = document.getElementById(planetName + '-mass');
@@ -85,15 +177,15 @@ for (let planet of planets) {
 
     inputMass.addEventListener('change', (e) => {
         planet.mass = parseInt(e.target.value);
-        return drawPlanets();
+        return draw();
     });
     inputSpeed.addEventListener('change', (e) => {
         planet.V2.speed = parseInt(e.target.value);
-        return drawPlanets();
+        return draw();
     });
     inputAngle.addEventListener('change', (e) => {
         planet.V2.angle = parseInt(e.target.value);
-        return drawPlanets();
+        return draw();
     });
 }
 
@@ -105,4 +197,4 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
     input.dispatchEvent(new Event('change'));
 });
 
-drawPlanets();
+draw();

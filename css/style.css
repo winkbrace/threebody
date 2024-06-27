@@ -17,6 +17,16 @@ main {
     align-items: center;
 }
 
+.yellow {
+    color: yellow;
+}
+.red {
+    color: red;
+}
+.orange {
+    color: orange;
+}
+
 .config {
     margin-right: 1rem;
     p {
@@ -24,18 +34,26 @@ main {
         flex-direction: column;
 
         label {
-            .label-text {
-                display: inline-block;
-                width: 70px;
-            }
             input {
                 width: 150px;
             }
-            .range-value {
-                color: white;
-                width: 30px;
-            }
         }
+    }
+
+    ul {
+        list-style: none;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    .range-value {
+        display: inline-block;
+        width: 30px;
+    }
+
+    .label-text {
+        display: inline-block;
+        width: 70px;
     }
 }
 
